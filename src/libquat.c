@@ -2,28 +2,37 @@
 
 
 // Store in c the hamilton product between a and b
+int dHamiltonProd (const enum LIBQUAT_ORDER COrder , double *c ,
+                  const enum LIBQUAT_ORDER AOrder , double *a , 
+                  const enum LIBQUAT_ORDER BOrder , double *b ) {
 
-int dHemiltonProd ( const enum CBLAS_ORDER Order , double *c , const double *a , const double *b ) {
-	
-	c[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3] ;
-	c[1] = a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2] ;
-	c[2] = a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1] ;
-	c[3] = a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0] ;
-	return(0);
+  if ( AOrder == LibQuatWXYZ && BOrder == LibQuatWXYZ ) {
+    c[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3] ;
+    c[1] = a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2] ;
+    c[2] = a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1] ;
+    c[3] = a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0] ;
+  } else {
+    // Not implemented
+    return (1);
+  }
+
+  return(0);
 }
 
-/*TODO
-// Return the inverse of quaternion s
-vec arma_quat_inv(const vec& s) {
-	double tmp_mod = norm(s,2)	;
-	vec d(4)			;
-	(d)(0) =   (s)(0) / tmp_mod	;
-	(d)(1) = - (s)(1) / tmp_mod	;
-	(d)(2) = - (s)(2) / tmp_mod	;
-	(d)(3) = - (s)(3) / tmp_mod	;
-	return(d);
+// Store in b the inverse of quaternion a
+int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *b , const enum LIBQUAT_ORDER AOrder , double *a) {
+  if ( AOrder == LibQuatWXYZ && BOrder == LibQuatWXYZ ) {
+    double tmp_mod = cblas_dnrm2 ( 4, a , 1);
+    b[0] =   a[0] / tmp_mod	;
+    b[1] = - a[1] / tmp_mod	;
+    b[2] = - a[2] / tmp_mod	;
+    b[3] = - a[3] / tmp_mod	;
+  } else {
+    return (1) ;
+  }
+  return(0);
 }
-*/
+
 
 
 

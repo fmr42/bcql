@@ -9,13 +9,13 @@
 enum LIBQUAT_ORDER { LibQuatWXYZ = 119 };
 
 
-//return the hamilton product between a and b
 // Stores in quaternion c the hamilton product between quaternions a and b
-int dHamiltonProd ( double *c , double *a , double *b ) ;
+int dHamiltonProd (const enum LIBQUAT_ORDER COrder , double *c ,
+                   const enum LIBQUAT_ORDER AOrder , double *a ,
+                   const enum LIBQUAT_ORDER BOrder , double *b ) ;
 
-
-// Return the inverse of quaternion s
-//TODO vec arma_quat_inv(const vec& s) ;
+// Store in b the inverse of quaternion a
+int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *b , const enum LIBQUAT_ORDER AOrder , double *a) ;
 
 //TODO vec arma_quat_between_vecs(const vec& a,const vec& b);
 /***********************************************

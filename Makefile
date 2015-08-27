@@ -3,10 +3,12 @@ default:
 	gcc -shared -o libquat.so libquat.o
 
 install:
-	mkdir /usr/include/libquat
+	mkdir -p /usr/include/libquat
 	cp src/libquat.h /usr/include/libquat/
 	cp libquat.so /usr/lib64/
-
+	chmod 755 /usr/include/libquat/
+	chmod 644 /usr/include/libquat/libquat.h
+	chmod 755 /usr/lib64/libquat.so
 clean:
 	echo "TODO"
 
