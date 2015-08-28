@@ -6,7 +6,8 @@
 
 
 //TODO Only one order is currently supported...
-enum LIBQUAT_ORDER { LibQuatWXYZ = 119 };
+enum LIBQUAT_Q_ORDER { LibQuatWXYZ = 130 };
+enum LIBQUAT_V_ORDER { LibQuatWXYZ = 140 };
 
 
 // Stores in quaternion c the hamilton product between quaternions a and b
@@ -18,10 +19,12 @@ int dHamiltonProd (const enum LIBQUAT_ORDER COrder , double *c ,
 int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *b , const enum LIBQUAT_ORDER AOrder , double *a) ;
 
 //TODO vec arma_quat_between_vecs(const vec& a,const vec& b);
+
 /***********************************************
 * Compute angular velocity given the orientation quaternion
 * and its derivative.
 ***********************************************/
+int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *v , const enum LIBQUAT_ORDER AOrder , double *a) ;
 //TODO vec arma_quat_d_to_vel(const vec& q0,const vec& q1);
 
 /*TODO**********************************************
