@@ -1,22 +1,38 @@
-#ifndef _LIBQUATERNION_H_
-#define _LIBQUATERNION_H_
+#ifndef _BCQL_H_
+#define _BCQL_H_
 
 #include <cblas.h>
 #include <lapacke/lapacke.h>
 
 
 //TODO Only one order is currently supported...
-enum LIBQUAT_Q_ORDER { LibQuatWXYZ = 130 };
-enum LIBQUAT_V_ORDER { LibQuatWXYZ = 140 };
+enum BCQL_Q_ORDER { BcqlWXYZ = 130 };
+enum BCQL_V_ORDER { BcqlXYZ  = 140 };
+enum BCQL_M_ORDER { BcqlColMajor = 102 }; //TODO Add Row Major
+
+
+//copies first "len" entries of src to corresponding entries in dst
+int dDub ( double *dst , double *src , unsigned int len ) ;
+// Sets first "len" entries of array to 0;
+int dZeros ( double *array , unsigned int len ) ;
+// puts in dst the element-by-element sum of src1 and src2
+int dSum ( double *dst , double alpha , double *src1 , double beta , double *src2 , unsigned int len ) ;
+
+// Compute cross product between 2 3D vecs
+int dCross ( double *c , double *a , double *b ) ;
+
+
+// Set the square matrix mat to the identity matrix
+int dEye ( double *mat , unsigned int order ) ;
+
+
 
 
 // Stores in quaternion c the hamilton product between quaternions a and b
-int dHamiltonProd (const enum LIBQUAT_ORDER COrder , double *c ,
-                   const enum LIBQUAT_ORDER AOrder , double *a ,
-                   const enum LIBQUAT_ORDER BOrder , double *b ) ;
+int dHamilton (const enum BCQL_Q_ORDER Order , double *c , double *a , double *b ) ;
 
 // Store in b the inverse of quaternion a
-int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *b , const enum LIBQUAT_ORDER AOrder , double *a) ;
+int dQInv( const enum BCQL_Q_ORDER Order , double *b , double *a) ;
 
 //TODO vec arma_quat_between_vecs(const vec& a,const vec& b);
 
@@ -24,8 +40,13 @@ int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *b , const enum LIBQUAT_O
 * Compute angular velocity given the orientation quaternion
 * and its derivative.
 ***********************************************/
-int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *v , const enum LIBQUAT_ORDER AOrder , double *a) ;
-//TODO vec arma_quat_d_to_vel(const vec& q0,const vec& q1);
+//int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *v , const enum LIBQUAT_ORDER AOrder , double *a) ;
+int dQD2Vel ( const enum BCQL_V_ORDER v_order    ,
+              const enum BCQL_Q_ORDER q_order    ,
+              double *v                          ,
+              double *q                          ,
+              double *dqdt                       );
+
 
 /*TODO**********************************************
 * Compute angular accelleration given the orientation quaternion
@@ -49,14 +70,13 @@ int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *v , const enum LIBQUAT_O
 * Return matrix M from vector v s.t. for any x
 * M*x = cross(v,x)
 ***********************************************/
-//TODO mat arma_cross_to_mat ( const vec& v ) ;
+int dCrossMat ( const enum BCQL_M_ORDER MOrder , double *M , const double *v ) ;
 
 /***********************************************
 * Applyes Rodriguez formula to quaternion q.
-* Returns rotation matrix
+* Store result in matrix R
 ***********************************************/
-//TODO mat arma_rodriguez ( const vec& q ) ;
-
+int dQ2R( const enum BCQL_M_ORDER Order , const enum BCQL_Q_ORDER , double *R , double *q) ;
 
 
 /***********************************************

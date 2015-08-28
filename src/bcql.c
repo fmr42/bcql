@@ -1,12 +1,55 @@
-#include "libquat.h"
+#include "bcql.h"
+
+
+int dDub ( double *dst , double *src , unsigned int len ) {
+  int i ;
+  for ( i=0 ; i<len ; i++ ) {
+    dst[i] = src[i] ;
+  }
+  // TODO Error check
+  return 0 ;
+
+}
+
+
+int dSum ( double *dst , double alpha , double *src1 , double beta , double *src2 , unsigned int len ) {
+  int i ;
+  for ( i=0 ; i<len ; i++ ) {
+    dst[i] = alpha * src1[i] + beta * src2[i] ;
+  }
+  // TODO Error check
+  return 0 ;
+
+}
+
+
+int dZeros ( double *array , unsigned int len ) {
+  int i ;
+  for ( i=0 ; i<len ; i++ ) {
+    array[i] = 0 ;
+  }
+  // TODO check for errors
+
+  return 0;
+}
+
+
+
+int dCross ( double *c , double *a , double *b ) {
+
+  c[0] = a[1] * b[2] - a[2] * b[1] ;
+  c[1] = a[2] * b[0] - a[0] * b[2] ;
+  c[2] = a[0] * b[1] - a[1] * b[0] ;
+
+  return (0);
+
+} ;
 
 
 // Store in c the hamilton product between a and b
-int dHamiltonProd (const enum LIBQUAT_ORDER COrder , double *c ,
-                  const enum LIBQUAT_ORDER AOrder , double *a , 
-                  const enum LIBQUAT_ORDER BOrder , double *b ) {
+int dHamilton (const enum BCQL_Q_ORDER Order , double *c , double *a , double *b ) {
 
-  if ( AOrder == LibQuatWXYZ && BOrder == LibQuatWXYZ ) {
+  if ( Order == BcqlWXYZ ) {
     c[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3] ;
     c[1] = a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2] ;
     c[2] = a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1] ;
@@ -20,8 +63,8 @@ int dHamiltonProd (const enum LIBQUAT_ORDER COrder , double *c ,
 }
 
 // Store in b the inverse of quaternion a
-int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *b , const enum LIBQUAT_ORDER AOrder , double *a) {
-  if ( AOrder == LibQuatWXYZ && BOrder == LibQuatWXYZ ) {
+int dQInv( const enum BCQL_Q_ORDER Order ,  double *b , double *a) {
+  if ( Order == BcqlWXYZ ) {
     double tmp_mod = cblas_dnrm2 ( 4, a , 1);
     b[0] =   a[0] / tmp_mod	;
     b[1] = - a[1] / tmp_mod	;
@@ -63,13 +106,31 @@ vec arma_quat_between_vecs(const vec& a,const vec& b){
 * Compute angular velocity given the orientation quaternion
 * and its derivative.
 ***********************************************/
-/*TODO
-vec arma_quat_d_to_vel(const vec& q0,const vec& q1){
-	vec w(4);
-	w = arma_quat_hamilton( 2 * arma_quat_inv(q0) , q1 );
-	return(w.subvec(1,3));
+int dQD2Vel ( const enum BCQL_V_ORDER v_order    ,
+              const enum BCQL_Q_ORDER q_order    ,
+              double *v                          ,
+              double *q                          ,
+              double *dqdt                       ) {
+
+  if ( q_order == BcqlWXYZ && v_order == BcqlXYZ ) {
+    double adj_res[4];
+    double tmp[4] ;
+
+    dQInv ( BcqlWXYZ , tmp , q ) ;
+    cblas_dscal ( 4 , 2 , tmp , 1 );
+
+    dHamilton ( BcqlWXYZ , adj_res , tmp , dqdt ) ;
+    v[0] = adj_res[1] ;
+    v[1] = adj_res[2] ;
+    v[2] = adj_res[3] ;
+  } else {
+    return(1);
+  }
+  
+  return (0);  
+
 }
-*/
+
 
 
 /*TODO**********************************************
@@ -100,33 +161,59 @@ vec arma_quat_rot ( const vec& q,const vec& v ) {
 * Return matrix M from vector v s.t. for any x
 * M*x = cross(v,x)
 ***********************************************/
-/*
-mat arma_cross_to_mat ( const vec& v ) {
-	mat M = zeros<mat>(3,3);
-	M(0,1) = -v(2);
-	M(0,2) =  v(1);
-	M(1,0) =  v(2);
-	M(1,2) = -v(0);
-	M(2,0) = -v(1);
-	M(2,1) =  v(0);
-	return ( M );
+int dCrossMat ( const enum BCQL_M_ORDER MOrder , double *M , const double *v ) {
+//TODO check MOrder
+  
+  M[0] = 0     ;      
+  M[1] =  v[2] ;
+  M[2] = -v[1] ;
+  M[3] = -v[2] ;
+  M[4] = 0     ;
+  M[5] =  v[0] ;
+  M[6] =  v[1] ;
+  M[7] = -v[0] ;
+  M[8] = 0     ;
+  return ( 0 );
 }
-*/
 
-/***********************************************
-* Applyes Rodriguez formula to quaternion q.
-* Returns rotation matrix
-***********************************************/
-/*
-mat arma_rodriguez ( const vec& q ) {
-	mat tmp = arma_cross_to_mat( q.subvec(1,3) );
-	return ( eye<mat>(3,3) + 2*q(0)*tmp +2*tmp*tmp );
+
+
+// Set the square matrix mat to the identity matrix
+int dEye ( double *mat , unsigned int order ) {
+  dZeros(mat,order*order);
+  int i;
+  for ( i=0 ; i < (order*order) ; i=i+order+1 ) {
+    mat[i]=1;
+  }
+  return (0);
 }
-*/
 
 
 
+// Computes rotation matrix R from quaternion q
+// R(q) = I + 2 η S(ǫ) + 2 (S(ǫ)^2)
+// For details see:
+// M.D. Shuster. A survey of attitude representation. The Journal of the
+// Astronautical Sciences, 41(4):439–517, December 1993.
+int dQ2R( const enum BCQL_M_ORDER QOrder , const enum BCQL_Q_ORDER MOrder , double *R , double *q) {
 
+  double eye [9] ;
+  dEye(eye,3);
+
+  double cross[9];
+  dCrossMat ( BcqlColMajor , cross , q+1 ) ;
+
+  double tmp1[9];
+  dDub(tmp1,cross,9);
+
+  dSum ( R , 1 , eye , 2*q[0] , tmp1 , 9 );
+
+  cblas_dgemm ( CblasColMajor , CblasNoTrans , CblasNoTrans , 3 , 3 , 3 , 2 , cross , 3 , cross , 3 , 0 , tmp1 , 3); 
+
+  dSum ( R , 1 , R , 1 , tmp1 , 9 );
+  
+  return (0);
+}
 
 
 /***********************************************

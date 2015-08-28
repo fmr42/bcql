@@ -1,14 +1,15 @@
 default:
-	gcc -c -Werror -fpic -Wall src/libquat.c -o libquat.o -lopenblas
-	gcc -shared -o libquat.so libquat.o
+	gcc -c -Werror -fpic -Wall src/bcql.c -o bcql.o -lopenblas
+	gcc -shared -o libbcql.so bcql.o -lopenblas
 
 install:
-	mkdir -p /usr/include/libquat
-	cp src/libquat.h /usr/include/libquat/
-	cp libquat.so /usr/lib64/
-	chmod 755 /usr/include/libquat/
-	chmod 644 /usr/include/libquat/libquat.h
-	chmod 755 /usr/lib64/libquat.so
+	#TODO use command "install" in place of "mkdir", "cp", "chmod", ecc..
+	mkdir -p /usr/include/bcql
+	cp src/bcql.h /usr/include/bcql/
+	cp libbcql.so /usr/lib64/
+	chmod 755 /usr/include/bcql/
+	chmod 644 /usr/include/bcql/bcql.h
+	chmod 755 /usr/lib64/libbcql.so
 clean:
 	echo "TODO"
 
