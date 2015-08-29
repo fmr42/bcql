@@ -251,11 +251,11 @@ int dCrossMat ( const enum BCQL_M_ORDER MOrder , double *M , const double *v ) {
 
 
 // Set the square matrix mat to the identity matrix
-int dEye ( double *mat , unsigned int order ) {
+int dEye ( unsigned int order , double scale , double *mat ) {
   dZeros(mat,order*order);
   int i;
   for ( i=0 ; i < (order*order) ; i=i+order+1 ) {
-    mat[i]=1;
+    mat[i]=scale;
   }
   return (0);
 }
@@ -270,7 +270,7 @@ int dEye ( double *mat , unsigned int order ) {
 int dQ2R( const enum BCQL_M_ORDER QOrder , const enum BCQL_Q_ORDER MOrder , double *R , double *q) {
 
   double eye [9] ;
-  dEye(eye,3);
+  dEye(3,1,eye);
 
   double cross[9];
   dCrossMat ( BcqlColMajor , cross , q+1 ) ;

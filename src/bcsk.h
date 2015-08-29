@@ -52,7 +52,7 @@ int dCross ( double *c , double *a , double *b ) ;
 
 
 // Set the square matrix mat to the identity matrix
-int dEye ( double *mat , unsigned int order ) ;
+int dEye ( unsigned int order , double scale , double *mat ) ;
 
 // Transpose square matrix
 int dSqTr ( int n , double *src , double *dst ) ;
