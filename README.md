@@ -1,4 +1,5 @@
-# BCQL
-A C library to manage quaternions in a BLAS/LAPACK style
+# BCSK
+BLAS Compliant Swiss Knife
 
+C library of usefull mat functions
 

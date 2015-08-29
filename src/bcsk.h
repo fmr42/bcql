@@ -16,7 +16,36 @@ int dDub ( double *dst , double *src , unsigned int len ) ;
 // Sets first "len" entries of array to 0;
 int dZeros ( double *array , unsigned int len ) ;
 // puts in dst the element-by-element sum of src1 and src2
-int dSum ( double *dst , double alpha , double *src1 , double beta , double *src2 , unsigned int len ) ;
+int dSum2  ( double *dst , double alpha , double *src1 , double beta , double *src2 , unsigned int len ) ;
+
+// sum up 3 arrays
+int dSum3 ( double *dst ,
+            double a1 , double *src1 ,
+            double a2 , double *src2 ,
+            double a3 , double *src3 ,
+            unsigned int len ) ;
+
+
+
+
+// sum up 4 arrays
+int dSum4 ( double *dst ,
+            double a1 , double *src1 ,
+            double a2 , double *src2 ,
+            double a3 , double *src3 ,
+            double a4 , double *src4 ,
+            unsigned int len ) ;
+
+
+
+// sum up 5 arrays
+int dSum5 ( double *dst ,
+            double a1 , double *src1 ,
+            double a2 , double *src2 ,
+            double a3 , double *src3 ,
+            double a4 , double *src4 ,
+            double a5 , double *src5 ,
+            unsigned int len ) ;
 
 // Compute cross product between 2 3D vecs
 int dCross ( double *c , double *a , double *b ) ;
@@ -25,7 +54,8 @@ int dCross ( double *c , double *a , double *b ) ;
 // Set the square matrix mat to the identity matrix
 int dEye ( double *mat , unsigned int order ) ;
 
-
+// Transpose square matrix
+int dSqTr ( int n , double *src , double *dst ) ;
 
 
 // Stores in quaternion c the hamilton product between quaternions a and b

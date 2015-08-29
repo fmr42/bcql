@@ -1,4 +1,4 @@
-#include "bcql.h"
+#include "bcsk.h"
 
 
 int dDub ( double *dst , double *src , unsigned int len ) {
@@ -12,7 +12,7 @@ int dDub ( double *dst , double *src , unsigned int len ) {
 }
 
 
-int dSum ( double *dst , double alpha , double *src1 , double beta , double *src2 , unsigned int len ) {
+int dSum2 ( double *dst , double alpha , double *src1 , double beta , double *src2 , unsigned int len ) {
   int i ;
   for ( i=0 ; i<len ; i++ ) {
     dst[i] = alpha * src1[i] + beta * src2[i] ;
@@ -21,6 +21,78 @@ int dSum ( double *dst , double alpha , double *src1 , double beta , double *src
   return 0 ;
 
 }
+
+// sum up 5 arrays
+int dSum5 ( double *dst ,
+            double a1 , double *src1 ,
+            double a2 , double *src2 ,
+            double a3 , double *src3 ,
+            double a4 , double *src4 ,
+            double a5 , double *src5 ,
+            unsigned int len ) {
+  int i ;
+  for ( i=0 ; i<len ; i++ ) {
+    dst[i] = a1 * src1[i] + a2 * src2[i] + a3 * src3[i] + a4 * src4[i] + a5 * src5[i]  ;
+  }
+  
+  return(0) ;
+}
+
+// sum up 3 arrays
+int dSum3 ( double *dst ,
+            double a1 , double *src1 ,
+            double a2 , double *src2 ,
+            double a3 , double *src3 ,
+            unsigned int len ) {
+  int i ; 
+  for ( i=0 ; i<len ; i++ ) {
+    dst[i] = a1 * src1[i] + a2 * src2[i] + a3 * src3[i] ;
+  }
+
+  return(0) ;
+}
+
+
+
+// sum up 4 arrays
+int dSum4 ( double *dst ,
+            double a1 , double *src1 ,
+            double a2 , double *src2 ,
+            double a3 , double *src3 ,
+            double a4 , double *src4 ,
+            unsigned int len ) {
+  int i ;
+  for ( i=0 ; i<len ; i++ ) {
+    dst[i] = a1 * src1[i] + a2 * src2[i] + a3 * src3[i] + a4 * src4[i] ;
+  }
+
+  return(0) ;
+}
+
+
+
+// Transpose square matrix
+int dSqTr ( int n , double *src , double *dst ) {
+  // if src == dst => have to use a tmp array
+  if ( src == dst ) {
+    double *tmp;
+    tmp = malloc ( sizeof(double) * n * n ) ;
+    dDub ( tmp , src , n*n ) ;
+    src = tmp ;
+  }
+
+  // transpose
+  int i,j;
+  for ( i=0 ; i<n ; i++ ) {
+    for ( j=0 ; j<n ; j++ ) {
+      dst[i*n+j] = src[j*n+i] ;
+    }
+  }
+  
+  return (0) ;
+}
+
+
 
 
 int dZeros ( double *array , unsigned int len ) {
@@ -206,11 +278,11 @@ int dQ2R( const enum BCQL_M_ORDER QOrder , const enum BCQL_Q_ORDER MOrder , doub
   double tmp1[9];
   dDub(tmp1,cross,9);
 
-  dSum ( R , 1 , eye , 2*q[0] , tmp1 , 9 );
+  dSum2 ( R , 1 , eye , 2*q[0] , tmp1 , 9 );
 
   cblas_dgemm ( CblasColMajor , CblasNoTrans , CblasNoTrans , 3 , 3 , 3 , 2 , cross , 3 , cross , 3 , 0 , tmp1 , 3); 
 
-  dSum ( R , 1 , R , 1 , tmp1 , 9 );
+  dSum2 ( R , 1 , R , 1 , tmp1 , 9 );
   
   return (0);
 }
