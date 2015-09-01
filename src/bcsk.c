@@ -316,3 +316,25 @@ vec arma_mat_to_q ( const mat& R ) {
 */
 
 
+int dSat( const double *src , double *dst , double sat_level , int len ) {
+  int i;
+  if ( sat_level < 0 )
+    sat_level = - sat_level;
+  for ( i=0 ; i<len ; i++ ){
+    if (src[i] > sat_level )
+      dst[i] = sat_level ;
+    else if (src[i] < -sat_level )
+      dst[i] = -sat_level ;
+    else
+      dst[i] = src[i] ;
+  }
+  return 0;
+}
+
+
+
+
+
+
+
+

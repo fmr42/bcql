@@ -114,5 +114,23 @@ int dQ2R( const enum BCQL_M_ORDER Order , const enum BCQL_Q_ORDER , double *R , 
 ***********************************************/
 //TODO vec arma_mat_to_q ( const mat& R ) ;
 
+
+/* Saturate each elements of an array between -abs(sat_level) and +abs(sat_level)
+ *
+ *                _______  _  +abs(sat_level)
+ *             | /
+ *      _______|/_______y  _ 0
+ *             /
+ *      ______/|           _ -abs(sat_level)
+ *             x
+ *
+ *     x: input value
+ *     y: output value
+ *
+ * N.B. 
+ */
+
+int dSat( const double *src , double *dst , double sat_level , int len ) ;
+
 #endif
 
