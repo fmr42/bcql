@@ -119,9 +119,9 @@ int dCross ( double *c , double *a , double *b ) {
 
 
 // Store in c the hamilton product between a and b
-int dHamilton (const enum BCQL_Q_ORDER Order , double *c , double *a , double *b ) {
+int dHamilton (const enum BCSK_Q_ORDER Order , double *c , double *a , double *b ) {
 
-  if ( Order == BcqlWXYZ ) {
+  if ( Order == BcskWXYZ ) {
     c[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3] ;
     c[1] = a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2] ;
     c[2] = a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1] ;
@@ -135,8 +135,8 @@ int dHamilton (const enum BCQL_Q_ORDER Order , double *c , double *a , double *b
 }
 
 // Store in b the inverse of quaternion a
-int dQInv( const enum BCQL_Q_ORDER Order ,  double *b , double *a) {
-  if ( Order == BcqlWXYZ ) {
+int dQInv( const enum BCSK_Q_ORDER Order ,  double *b , double *a) {
+  if ( Order == BcskWXYZ ) {
     double tmp_mod = cblas_dnrm2 ( 4, a , 1);
     b[0] =   a[0] / tmp_mod	;
     b[1] = - a[1] / tmp_mod	;
@@ -178,20 +178,20 @@ vec arma_quat_between_vecs(const vec& a,const vec& b){
 * Compute angular velocity given the orientation quaternion
 * and its derivative.
 ***********************************************/
-int dQD2Vel ( const enum BCQL_V_ORDER v_order    ,
-              const enum BCQL_Q_ORDER q_order    ,
+int dQD2Vel ( const enum BCSK_V_ORDER v_order    ,
+              const enum BCSK_Q_ORDER q_order    ,
               double *v                          ,
               double *q                          ,
               double *dqdt                       ) {
 
-  if ( q_order == BcqlWXYZ && v_order == BcqlXYZ ) {
+  if ( q_order == BcskWXYZ && v_order == BcskXYZ ) {
     double adj_res[4];
     double tmp[4] ;
 
-    dQInv ( BcqlWXYZ , tmp , q ) ;
+    dQInv ( BcskWXYZ , tmp , q ) ;
     cblas_dscal ( 4 , 2 , tmp , 1 );
 
-    dHamilton ( BcqlWXYZ , adj_res , tmp , dqdt ) ;
+    dHamilton ( BcskWXYZ , adj_res , tmp , dqdt ) ;
     v[0] = adj_res[1] ;
     v[1] = adj_res[2] ;
     v[2] = adj_res[3] ;
@@ -233,7 +233,7 @@ vec arma_quat_rot ( const vec& q,const vec& v ) {
 * Return matrix M from vector v s.t. for any x
 * M*x = cross(v,x)
 ***********************************************/
-int dCrossMat ( const enum BCQL_M_ORDER MOrder , double *M , const double *v ) {
+int dCrossMat ( const enum BCSK_M_ORDER MOrder , double *M , const double *v ) {
 //TODO check MOrder
   
   M[0] = 0     ;      
@@ -267,13 +267,13 @@ int dEye ( unsigned int order , double scale , double *mat ) {
 // For details see:
 // M.D. Shuster. A survey of attitude representation. The Journal of the
 // Astronautical Sciences, 41(4):439–517, December 1993.
-int dQ2R( const enum BCQL_M_ORDER QOrder , const enum BCQL_Q_ORDER MOrder , double *R , double *q) {
+int dQ2R( const enum BCSK_M_ORDER QOrder , const enum BCSK_Q_ORDER MOrder , double *R , double *q) {
 
   double eye [9] ;
   dEye(3,1,eye);
 
   double cross[9];
-  dCrossMat ( BcqlColMajor , cross , q+1 ) ;
+  dCrossMat ( BcskColMajor , cross , q+1 ) ;
 
   double tmp1[9];
   dDub(tmp1,cross,9);
@@ -287,33 +287,41 @@ int dQ2R( const enum BCQL_M_ORDER QOrder , const enum BCQL_Q_ORDER MOrder , doub
   return (0);
 }
 
-
-/***********************************************
-* Conversion from rotation matrix to quaternion
-***********************************************/
-/*
-vec arma_mat_to_q ( const mat& R ) {
-	vec q = zeros<vec>(4) ;
-	q(0) = 0.5 * sqrt ( 1 + R(0,0) + R(1,1) + R(2,2) ) ;
-
-	double t =  R(0,0) + R(1,1) + R(2,2) ;
-	double r = sqrt(1+t) ;
-	q(0) = 0.5*r ;
-	q(1) = copysign(0.5*sqrt(1+R(0,0)-R(1,1)-R(2,2)), R(2,1)-R(1,2)) ;
-	q(2) = copysign(0.5*sqrt(1-R(0,0)+R(1,1)-R(2,2)), R(0,2)-R(2,0)) ;
-	q(3) = copysign(0.5*sqrt(1-R(0,0)-R(1,1)+R(2,2)), R(1,0)-R(0,1)) ;
-	if ( isnan(q(0)) )
-		q(0)=0;
-	if ( isnan(q(1)) )
-		q(1)=0;
-	if ( isnan(q(2)) )
-		q(2)=0;
-	if ( isnan(q(3)) )
-		q(3)=0;
-
-	return ( q ) ;
+// for implementation details see:
+// http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
+int dR2Q ( const enum BCSK_M_ORDER ROrder , const enum BCSK_Q_ORDER QOrder , double *R , double *q) {
+  // Assuming q = [w x y z]'
+  // Assuming R in col major order
+  double trace = R[0] + R[4] + R[8] ;
+  if( trace > 0 ) {
+    double s = 0.5 / sqrt( trace + 1.0 );
+    q[0] = 0.25 / s;
+    q[1] = ( R[5] - R[7] ) * s;
+    q[2] = ( R[6] - R[6] ) * s;
+    q[3] = ( R[1] - R[3] ) * s;
+  } else {
+    if ( R[0] > R[4] && R[0] > R[8] ) {
+      double s = 2.0 * sqrtf( 1.0 + R[0] - R[4] - R[8]);
+      q[0] = (R[5] - R[7] ) / s;
+      q[1] = 0.25f * s;
+      q[2] = (R[3] + R[1] ) / s;
+      q[3] = (R[6] + R[2] ) / s;
+    } else if (R[4] > R[8]) {
+      double s = 2.0f * sqrtf( 1.0f + R[4] - R[0] - R[8]);
+      q[0] = (R[6] - R[2] ) / s;
+      q[1] = (R[3] + R[1] ) / s;
+      q[2] = 0.25f * s;
+      q[3] = (R[7] + R[5] ) / s;
+    } else {
+      double s = 2.0f * sqrtf( 1.0f + R[8] - R[0] - R[4] );
+      q[0] = (R[1] - R[3] ) / s;
+      q[1] = (R[6] + R[2] ) / s;
+      q[2] = (R[7] + R[5] ) / s;
+      q[3] = 0.25f * s;
+    }
+  }
+  return ( 0 ) ;
 }
-*/
 
 
 int dSat( const double *src , double *dst , double sat_level , int len ) {

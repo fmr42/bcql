@@ -3,18 +3,21 @@
 
 #include <cblas.h>
 #include <lapacke/lapacke.h>
+#include <math.h>
 
 
 //TODO Only one order is currently supported...
-enum BCQL_Q_ORDER { BcqlWXYZ = 130 };
-enum BCQL_V_ORDER { BcqlXYZ  = 140 };
-enum BCQL_M_ORDER { BcqlColMajor = 102 }; //TODO Add Row Major
+enum BCSK_Q_ORDER { BcskWXYZ = 130 };
+enum BCSK_V_ORDER { BcskXYZ  = 140 };
+enum BCSK_M_ORDER { BcskColMajor = 102 }; //TODO Add Row Major
 
 
 //copies first "len" entries of src to corresponding entries in dst
 int dDub ( double *dst , double *src , unsigned int len ) ;
+
 // Sets first "len" entries of array to 0;
 int dZeros ( double *array , unsigned int len ) ;
+
 // puts in dst the element-by-element sum of src1 and src2
 int dSum2  ( double *dst , double alpha , double *src1 , double beta , double *src2 , unsigned int len ) ;
 
@@ -25,9 +28,6 @@ int dSum3 ( double *dst ,
             double a3 , double *src3 ,
             unsigned int len ) ;
 
-
-
-
 // sum up 4 arrays
 int dSum4 ( double *dst ,
             double a1 , double *src1 ,
@@ -35,8 +35,6 @@ int dSum4 ( double *dst ,
             double a3 , double *src3 ,
             double a4 , double *src4 ,
             unsigned int len ) ;
-
-
 
 // sum up 5 arrays
 int dSum5 ( double *dst ,
@@ -48,8 +46,8 @@ int dSum5 ( double *dst ,
             unsigned int len ) ;
 
 // Compute cross product between 2 3D vecs
+// c = a cross b ;
 int dCross ( double *c , double *a , double *b ) ;
-
 
 // Set the square matrix mat to the identity matrix
 int dEye ( unsigned int order , double scale , double *mat ) ;
@@ -57,12 +55,11 @@ int dEye ( unsigned int order , double scale , double *mat ) ;
 // Transpose square matrix
 int dSqTr ( int n , double *src , double *dst ) ;
 
-
 // Stores in quaternion c the hamilton product between quaternions a and b
-int dHamilton (const enum BCQL_Q_ORDER Order , double *c , double *a , double *b ) ;
+int dHamilton (const enum BCSK_Q_ORDER Order , double *c , double *a , double *b ) ;
 
 // Store in b the inverse of quaternion a
-int dQInv( const enum BCQL_Q_ORDER Order , double *b , double *a) ;
+int dQInv( const enum BCSK_Q_ORDER Order , double *b , double *a) ;
 
 //TODO vec arma_quat_between_vecs(const vec& a,const vec& b);
 
@@ -71,12 +68,11 @@ int dQInv( const enum BCQL_Q_ORDER Order , double *b , double *a) ;
 * and its derivative.
 ***********************************************/
 //int dQuatInv( const enum LIBQUAT_ORDER BOrder , double *v , const enum LIBQUAT_ORDER AOrder , double *a) ;
-int dQD2Vel ( const enum BCQL_V_ORDER v_order    ,
-              const enum BCQL_Q_ORDER q_order    ,
+int dQD2Vel ( const enum BCSK_V_ORDER v_order    ,
+              const enum BCSK_Q_ORDER q_order    ,
               double *v                          ,
               double *q                          ,
               double *dqdt                       );
-
 
 /*TODO**********************************************
 * Compute angular accelleration given the orientation quaternion
@@ -100,19 +96,19 @@ int dQD2Vel ( const enum BCQL_V_ORDER v_order    ,
 * Return matrix M from vector v s.t. for any x
 * M*x = cross(v,x)
 ***********************************************/
-int dCrossMat ( const enum BCQL_M_ORDER MOrder , double *M , const double *v ) ;
+int dCrossMat ( const enum BCSK_M_ORDER MOrder , double *M , const double *v ) ;
 
 /***********************************************
-* Applyes Rodriguez formula to quaternion q.
-* Store result in matrix R
+* Applyes Rodriguez formula to convert quaternion q
+* to rotation matrix R
 ***********************************************/
-int dQ2R( const enum BCQL_M_ORDER Order , const enum BCQL_Q_ORDER , double *R , double *q) ;
+int dQ2R ( const enum BCSK_M_ORDER Order , const enum BCSK_Q_ORDER , double *R , double *q) ;
 
 
 /***********************************************
-* Conversion from rotation matrix to quaternion
+* Conversion from rotation matrix R to quaternion q
 ***********************************************/
-//TODO vec arma_mat_to_q ( const mat& R ) ;
+int dR2Q ( const enum BCSK_M_ORDER ROrder , const enum BCSK_Q_ORDER QOrder , double *R , double *q) ;
 
 
 /* Saturate each elements of an array between -abs(sat_level) and +abs(sat_level)
