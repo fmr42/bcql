@@ -127,6 +127,7 @@ int dR2Q ( const enum BCSK_M_ORDER ROrder , const enum BCSK_Q_ORDER QOrder , dou
  */
 
 int dSat( const double *src , double *dst , double sat_level , int len ) ;
+int dSatv( const double *src , double *dst , const double *sat_levels , int len ) ;
 
 #endif
 

@@ -121,15 +121,12 @@ int dCross ( double *c , double *a , double *b ) {
 // Store in c the hamilton product between a and b
 int dHamilton (const enum BCSK_Q_ORDER Order , double *c , double *a , double *b ) {
 
-  if ( Order == BcskWXYZ ) {
     c[0] = a[0]*b[0] - a[1]*b[1] - a[2]*b[2] - a[3]*b[3] ;
     c[1] = a[0]*b[1] + a[1]*b[0] + a[2]*b[3] - a[3]*b[2] ;
     c[2] = a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1] ;
     c[3] = a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0] ;
-  } else {
-    // Not implemented
-    return (1);
-  }
+    
+    cblas_dscal( 3  , cblas_dnrm2 ( 3,c,1) ,c ,1);
 
   return(0);
 }
@@ -177,6 +174,8 @@ vec arma_quat_between_vecs(const vec& a,const vec& b){
 /***********************************************
 * Compute angular velocity given the orientation quaternion
 * and its derivative.
+* For details see:
+* https://en.wikipedia.org/wiki/Rotation_formalisms_in_three_dimensions
 ***********************************************/
 int dQD2Vel ( const enum BCSK_V_ORDER v_order    ,
               const enum BCSK_Q_ORDER q_order    ,
@@ -339,6 +338,23 @@ int dSat( const double *src , double *dst , double sat_level , int len ) {
   return 0;
 }
 
+int dSatv( const double *src , double *dst , const double *sat_levels , int len ) {
+  int i;
+  double sat ;
+  for ( i=0 ; i<len ; i++ ){
+    if ( sat_levels[i] < 0 )
+      sat = - sat_levels[i];
+    else
+      sat = + sat_levels[i];
+    if (src[i] > sat )
+      dst[i] = sat ;
+    else if (src[i] < -sat )
+      dst[i] = -sat ;
+    else
+      dst[i] = src[i] ;
+  }
+  return 0;
+}
 
 
 
