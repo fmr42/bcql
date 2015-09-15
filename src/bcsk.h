@@ -126,8 +126,15 @@ int dR2Q ( const enum BCSK_M_ORDER ROrder , const enum BCSK_Q_ORDER QOrder , dou
  * N.B. 
  */
 
-int dSat( const double *src , double *dst , double sat_level , int len ) ;
-int dSatv( const double *src , double *dst , const double *sat_levels , int len ) ;
+int dSat( double *src , double *dst , double sat_level , int len ) ;
+
+
+
+// normalize vector X
+int dNormalise ( const int N , double *X  ); 
+
+// compute rotation quaternion between v1 and v2
+int dQbetVs ( double *Q , double *v1 , double *v2);
 
 #endif
 

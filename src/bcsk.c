@@ -126,49 +126,60 @@ int dHamilton (const enum BCSK_Q_ORDER Order , double *c , double *a , double *b
     c[2] = a[0]*b[2] - a[1]*b[3] + a[2]*b[0] + a[3]*b[1] ;
     c[3] = a[0]*b[3] + a[1]*b[2] - a[2]*b[1] + a[3]*b[0] ;
     
-    cblas_dscal( 3  , cblas_dnrm2 ( 3,c,1) ,c ,1);
-
   return(0);
 }
 
 // Store in b the inverse of quaternion a
 int dQInv( const enum BCSK_Q_ORDER Order ,  double *b , double *a) {
-  if ( Order == BcskWXYZ ) {
-    double tmp_mod = cblas_dnrm2 ( 4, a , 1);
+    double tmp_mod = a[0]*a[0] + a[1]*a[1] + a[2]*a[2] + a[3]*a[3] ;
     b[0] =   a[0] / tmp_mod	;
     b[1] = - a[1] / tmp_mod	;
     b[2] = - a[2] / tmp_mod	;
     b[3] = - a[3] / tmp_mod	;
-  } else {
-    return (1) ;
-  }
   return(0);
 }
 
 
 
 
-/*TODO
+
 // Compute and store in q the rotatation quaternion from a to b
-// TODO rotation of 180 degrees is a special case and needs to be implemented
-vec arma_quat_between_vecs(const vec& a,const vec& b){
-	vec q(4);
-	// Compute axis/angle representation 
-	double cos_teta = dot( (a),(b) ) / ( norm((a),2) * norm((b),2) )	;
-	vec axis = cross((a),(b))			;
-	axis = normalise(axis)				;
-	// Compute quaternion 
-	double half_teta = acos(cos_teta) / 2	;
-	q(0) = cos(half_teta)		;
-	q(1) = axis(0)	* sin(half_teta);
-	q(2) = axis(1)	* sin(half_teta);
-	q(3) = axis(2)	* sin(half_teta);
-	q=normalise(q);
-	return(q);
+// NB for rotation of 180 degrees z will be assumed as axes of rotation
+
+int dQbetVs ( double *Q , double *v1 , double *v2){
+  double v1_n[3] ;
+  double v2_n[3] ;
+  double cos_teta;
+
+  // compute cosine of the angle between the 2 vectors
+  dDub ( v1_n , v1 , 3 ) ;
+  dNormalise ( 3 , v1_n ) ;
+  dDub ( v2_n , v2 , 3 ) ;
+  dNormalise ( 3 , v2_n ) ;
+
+  cos_teta = cblas_ddot ( 3 , v1_n , 1 , v2_n , 1 );
+
+  // find rotation axis
+  double epsilon = 0.00001 ; // TODO!!!! Hard-coded
+  if ( 1 - cos_teta < epsilon ) { // no rotation
+    Q[0] = 1 ;
+    Q[1] = 0 ;
+    Q[2] = 0 ;
+    Q[3] = 0 ;
+  } else if ( 1 + cos_teta < epsilon ) { // 180 degrees rotation
+    Q[0] = 0 ;
+    Q[1] = 0 ;
+    Q[2] = 0 ;
+    Q[3] = 1 ;
+  } else { // not a special case
+    double teta = acos ( cos_teta ) ;
+    Q[0] = cos ( teta/2 );
+    dCross ( Q+1 , v1_n , v2_n ) ;
+    cblas_dscal ( 3 , sin ( teta/2 ) / sin(teta) , Q+1 , 1 );
+  }
+  
+  return (0);
 }
-*/
-
-
 
 
 /***********************************************
@@ -183,20 +194,22 @@ int dQD2Vel ( const enum BCSK_V_ORDER v_order    ,
               double *q                          ,
               double *dqdt                       ) {
 
-  if ( q_order == BcskWXYZ && v_order == BcskXYZ ) {
-    double adj_res[4];
-    double tmp[4] ;
+// Formula:  [ 0 w ] = hamilton ( 2*(dq/dt) , q^-1)
+//                               ____tmp1____
+//                     ________tmp2_______________
+    double tmp1[4];
+    double tmp2[4];
+    double q_inv[4] ;
 
-    dQInv ( BcskWXYZ , tmp , q ) ;
-    cblas_dscal ( 4 , 2 , tmp , 1 );
+    dQInv ( BcskWXYZ , q_inv , q ) ;
 
-    dHamilton ( BcskWXYZ , adj_res , tmp , dqdt ) ;
-    v[0] = adj_res[1] ;
-    v[1] = adj_res[2] ;
-    v[2] = adj_res[3] ;
-  } else {
-    return(1);
-  }
+    dDub( tmp1 , dqdt , 4);
+    cblas_dscal ( 4 , 2 , tmp1 , 1 );
+
+    dHamilton ( BcskWXYZ , tmp2 , tmp1 , q_inv ) ;
+    v[0] = tmp2[1] ;
+    v[1] = tmp2[2] ;
+    v[2] = tmp2[3] ;
   
   return (0);  
 
@@ -220,11 +233,33 @@ int dQD2Vel ( const enum BCSK_V_ORDER v_order    ,
 * This formula should be faster than:
 * v_new = q * v * q^-1
 ***********************************************/
-/*TODO
-vec arma_quat_rot ( const vec& q,const vec& v ) {
-	return ( v + 2*cross( q.subvec(1,3) , cross ( q.subvec(1,3),v)+q(0)*v) );
+
+int dQV ( double *q , double *v_src , double *v_dst ) {
+  double tmp1 [4] ;
+  double tmp2 [4] ;
+  double tmp3 [4] ;
+  double q_inv[4] ;
+  // Algorithm:
+  // [0;v_dst] = hamilton ( q , hamilton ( [0;v_src] ,  q^-1    ) )
+  //                                   __tmp1__    _q_inv_
+  //                        _________________tmp2____________
+
+  dQInv( BcskWXYZ ,  q_inv , q ) ;
+  tmp1[0] = 0 ;
+  tmp1[1] = v_src[0] ;
+  tmp1[2] = v_src[1] ;
+  tmp1[3] = v_src[2] ;
+  dHamilton (BcskWXYZ , tmp2  , tmp1 , q_inv );
+  dHamilton (BcskWXYZ , tmp3  , q    , tmp2  );
+
+  v_dst[0] = tmp3[1] ;
+  v_dst[1] = tmp3[2] ;
+  v_dst[2] = tmp3[3] ;
+
+  return(0);
+
 }
-*/
+
 
 
 
@@ -319,11 +354,12 @@ int dR2Q ( const enum BCSK_M_ORDER ROrder , const enum BCSK_Q_ORDER QOrder , dou
       q[3] = 0.25f * s;
     }
   }
+  dNormalise ( 4 , q );
   return ( 0 ) ;
 }
 
 
-int dSat( const double *src , double *dst , double sat_level , int len ) {
+int dSat( double *src , double *dst , double sat_level , int len ) {
   int i;
   if ( sat_level < 0 )
     sat_level = - sat_level;
@@ -338,27 +374,15 @@ int dSat( const double *src , double *dst , double sat_level , int len ) {
   return 0;
 }
 
-int dSatv( const double *src , double *dst , const double *sat_levels , int len ) {
+
+int dNormalise ( const int N , double *X  ) {
+  double norm = cblas_dnrm2( N , X , 1);
   int i;
-  double sat ;
-  for ( i=0 ; i<len ; i++ ){
-    if ( sat_levels[i] < 0 )
-      sat = - sat_levels[i];
-    else
-      sat = + sat_levels[i];
-    if (src[i] > sat )
-      dst[i] = sat ;
-    else if (src[i] < -sat )
-      dst[i] = -sat ;
-    else
-      dst[i] = src[i] ;
+  for ( i=0 ; i<N ; i++ ) {
+    X[i] = X[i] / norm ;
   }
+
   return 0;
 }
-
-
-
-
-
 
 
